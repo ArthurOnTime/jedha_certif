@@ -1,0 +1,33 @@
+artifact_path: getaround_price_prediction
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.9.6
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.4.2
+mlflow_version: 2.13.0
+model_size_bytes: 354208
+model_uuid: 3f4e0ebef1594e14a4e4077849f9f862
+run_id: c956f13b3d334bfb9202f52244a224e9
+signature:
+  inputs: '[{"type": "string", "name": "model_key", "required": true}, {"type": "long",
+    "name": "mileage", "required": true}, {"type": "long", "name": "engine_power",
+    "required": true}, {"type": "string", "name": "fuel", "required": true}, {"type":
+    "string", "name": "paint_color", "required": true}, {"type": "string", "name":
+    "car_type", "required": true}, {"type": "boolean", "name": "private_parking_available",
+    "required": true}, {"type": "boolean", "name": "has_gps", "required": true}, {"type":
+    "boolean", "name": "has_air_conditioning", "required": true}, {"type": "boolean",
+    "name": "automatic_car", "required": true}, {"type": "boolean", "name": "has_getaround_connect",
+    "required": true}, {"type": "boolean", "name": "has_speed_regulator", "required":
+    true}, {"type": "boolean", "name": "winter_tires", "required": true}]'
+  outputs: '[{"type": "tensor", "tensor-spec": {"dtype": "float32", "shape": [-1]}}]'
+  params: null
+utc_time_created: '2024-05-31 14:50:09.483563'

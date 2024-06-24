@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1717422202465
+current_stage: None
+description: null
+last_updated_timestamp: 1717422202465
+name: xgboost
+run_id: 9304a72bdf9e4d2bb4c8984e0ff59c7b
+run_link: null
+source: /Users/arthurblanchon/Desktop/Jehda/project_Getaround_ongoing/api_server/pricing_modeling/../mlruns/747661401321503189/9304a72bdf9e4d2bb4c8984e0ff59c7b/artifacts/getaround_price_prediction
+status: READY
+status_message: null
+storage_location: /Users/arthurblanchon/Desktop/Jehda/project_Getaround_ongoing/api_server/pricing_modeling/../mlruns/747661401321503189/9304a72bdf9e4d2bb4c8984e0ff59c7b/artifacts/getaround_price_prediction
+user_id: null
+version: 1
