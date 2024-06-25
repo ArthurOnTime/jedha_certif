@@ -31,11 +31,6 @@ class HotelSpider(scrapy.Spider):
         self.counter = 0
         self.start_urls = [self.list_url[self.counter]]
 
-    # Url to start your spider from -> TRY TO REMOVE
-    #start_urls = [
-     #   "https://www.booking.com/searchresults.fr.html?ss=Paris&checkin=2024-03-02&checkout=2024-03-05&group_adults=2&no_rooms=1&group_children=0"
-    #]
-
     # Callback function that will be called when starting your spider
     def parse(self, response):
 
