@@ -42,8 +42,8 @@ app = FastAPI(
     openapi_tags=tags_metadata
 )
 
-mlflow.set_tracking_uri("https://mlflow-server-09febdc5a39a.herokuapp.com")
-logged_model = 'runs:/30f56c9d46da43009a97c7535b36893b/xgboost'
+mlflow.set_tracking_uri("https://mlflow-s3-5c46c0d9d46b.herokuapp.com/")
+logged_model = 'runs:/18f2bcb978c2417cb3c6f85174da829e/xgboost'
 #logged_model = 'pricing_modeling/logged_model/getaround_price_prediction'
 print('loading model...')
 loaded_model = mlflow.pyfunc.load_model(logged_model)
@@ -57,7 +57,7 @@ async def index(input:Input):
     columns = ['model_key', 'mileage', 'engine_power', 'fuel', 'paint_color',
        'car_type', 'private_parking_available', 'has_gps',
        'has_air_conditioning', 'automatic_car', 'has_getaround_connect',
-       'has_speed_regulator', 'winter_tires', 'rental_price_per_day']
+       'has_speed_regulator', 'winter_tires']
     features = pd.DataFrame([input.input], columns=columns)
     features['private_parking_available'].astype(bool)
     features['has_gps'].astype(bool)
