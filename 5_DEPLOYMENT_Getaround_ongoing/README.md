@@ -15,3 +15,6 @@ You can test the API by using :
 
 ## EDA streamlit
 
+The hosted version can be found [here](https://getaround-analytics-94f74e7936de.herokuapp.com/).
+
+
