@@ -8,3 +8,4 @@ seaborn
 boto3
 requests
 python-dotenv
+openpyxl

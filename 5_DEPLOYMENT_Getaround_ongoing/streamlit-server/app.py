@@ -7,48 +7,17 @@ import requests
 
 ### Config
 st.set_page_config(
-    page_title="E-commerce",
-    page_icon="💸 ",
+    page_title="Getaround analysis",
+    page_icon="🚗 ",
     layout="wide"
 )
 
-with st.form('my_form'):
-  address = st.text_area('Enter a wallet address')
-  submitted = st.form_submit_button('Scan')
-  if len(address)<1:
-    print('ko')
-    st.warning('Address format must be a string!', icon='⚠')
-  else:
-    print(f'ok - {address}')
-    
-    url = f'https://walletscan-api-7f80b4b1818a.herokuapp.com/wallet-info/{f'"{address}"'}'
-    print('url', url)
-
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        wallet_info = response.json()
-        print('wallet_info',wallet_info)
-        st.info(wallet_info)
-    else:
-        print(f"Error: {response.status_code}")
-        st.warning(f"Error: {response.status_code}", icon='⚠')
-
-DATA_URL = ('https://full-stack-assets.s3.eu-west-3.amazonaws.com/Deployment/e-commerce_data.csv')
-
 ### App
-st.title("Build dashboards with Streamlit 🎨")
+st.title("🚗 Getaround analysis")
 
 st.markdown("""
-    Welcome to this awesome `streamlit` dashboard. This library is great to build very fast and
-    intuitive charts and application running on the web. Here is a showcase of what you can do with
-    it. Our data comes from an e-commerce website that simply displays samples of customer sales. Let's check it out.
-
-    Also, if you want to have a real quick overview of what streamlit is all about, feel free to watch the below video 👇
+    You'll find below elements to design the "delay before rebooking" getaround feature 👇
 """)
-
-with st.expander("⏯️ Watch this 15min tutorial"):
-    st.video("https://youtu.be/B2iAodr0fOo")
 
 st.markdown("---")
 
@@ -56,129 +25,148 @@ st.markdown("---")
 # Use `st.cache` when loading data is extremly useful
 # because it will cache your data so that your app 
 # won't have to reload it each time you refresh your app
-@st.cache
-def load_data(nrows):
-    data = pd.read_csv(DATA_URL, nrows=nrows)
-    data["Date"] = data["Date"].apply(lambda x: pd.to_datetime(",".join(x.split(",")[-2:])))
-    data["currency"] = data["currency"].apply(lambda x: pd.to_numeric(x[1:]))
-    return data
-
-st.subheader("Load and showcase data")
-st.markdown("""
-
-    You can use the usual Data Science libraries like `pandas` or `numpy` to load data. 
-    Then simply use [`st.write()`](https://docs.streamlit.io/library/api-reference/write-magic/st.write) to showcase it on your web app. 
-
-""")
+@st.cache_data
+def load_data():
+    dataset = pd.read_excel('get_around_delay_analysis.xlsx')
+    #
+    #  Potential pre-processing here
+    #
+    return dataset
 
 data_load_state = st.text('Loading data...')
-data = load_data(1000)
+dataset = load_data()
 data_load_state.text("") # change text from "Loading data..." to "" once the the load_data function has run
 
-## Run the below code if the check is checked ✅
-if st.checkbox('Show raw data'):
-    st.subheader('Raw data')
-    st.write(data)    
+df_no_canceled = dataset.loc[dataset['state'] != "canceled"]
+df_no_canceled['late_by'] = df_no_canceled['delay_at_checkout_in_minutes'].apply(lambda x : max(x,0))
 
-## Simple bar chart
-st.subheader("Simple bar chart built directly with Streamlit")
-st.markdown("""
-    You can build simple chart directly with streamlit using:
+latencies = df_no_canceled['late_by'].value_counts().reset_index()
+overtime = pd.DataFrame(columns=["nb_late","percent_late"])
 
-    * [`st.bar_chart`](https://docs.streamlit.io/library/api-reference/charts/st.bar_chart)
-    * [`st.line_chart`](https://docs.streamlit.io/library/api-reference/charts/st.line_chart)
-    * [`st.area_chart`](https://docs.streamlit.io/library/api-reference/charts/st.area_chart)
+df_no_canceled_short_delay = df_no_canceled.loc[df_no_canceled['time_delta_with_previous_rental_in_minutes'].notna()]
+df_no_canceled_short_delay['late_by'].count(), df_no_canceled['late_by'].count()
 
-    Eventhough it doesn't offer great flexibility, it is still a very simple way to create graphs quickly since 
-    streamlit since these methods accepts a pandas DataFrame or Numpy array as input.
+df_no_canceled_short_delay['real_delta'] = df_no_canceled_short_delay['time_delta_with_previous_rental_in_minutes'] - df_no_canceled_short_delay['late_by']
+real_latencies = df_no_canceled_short_delay['real_delta'].value_counts().reset_index()
 
-""")
-currency_per_country = data.set_index("country")["currency"]
-st.bar_chart(currency_per_country)
+#real_filtered_latencies = real_latencies.loc[(real_latencies["real_delta"] < 0) & (real_latencies["real_delta"] > -180)]
 
-## Bar chart built with plotly 
-st.subheader("Simple bar chart built with Plotly")
-st.markdown("""
-    Now, the best thing about `streamlit` is its compatibility with other libraries. For example, you
-    don't need to actually use built-in charts to create your dashboard, you can use :
-    
-    * [`plotly`](https://docs.streamlit.io/library/api-reference/charts/st.plotly_chart) 
-    * [`matplotlib`](https://docs.streamlit.io/library/api-reference/charts/st.pyplot)
-    * [`bokeh`](https://docs.streamlit.io/library/api-reference/charts/st.bokeh_chart)
-    * ...
+col1, col2, col3 = st.columns(3)
+col1.metric("Total bookings", f"{dataset.shape[0]}")
+col2.metric("Uncanceled rentals", f"{df_no_canceled.shape[0]}")
+col3.metric("Next booking under 12h", f"{df_no_canceled_short_delay.shape[0]}")
 
-    This way, you have all the flexibility you need to build awesome dashboards. 🥰
+st.markdown("---")
 
-""")
-fig = px.histogram(data.sort_values("country"), x="country", y="currency", barmode="group")
-st.plotly_chart(fig, use_container_width=True)
-
-
-### Input data 
-st.subheader("Input data")
-st.markdown("""
-    As a final note, you can use data that a user will insert when he/she interacts with your app.
-    This is called *input data*. To collect these, you can do two things:
-    * [Use any of the input widget](https://docs.streamlit.io/library/api-reference/widgets)
-    * [Build a form](https://docs.streamlit.io/library/api-reference/control-flow/st.form)
-
-    Depending on what you need to do, you will prefer one or the other. With a `form`, you actually group
-    input widgets together and send the data right away, which can be useful when you need to filter
-    by several variables.
-
+st.header("""
+    What's the volume of rentals ending with delays ?
 """)
 
 #### Create two columns
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("**1️⃣ Example of input widget**")
-    country = st.selectbox("Select a country you want to see all time sales", data["country"].sort_values().unique())
-    
-    country_sales = data[data["country"]==country]
-    fig = px.histogram(country_sales, x="Date", y="currency")
-    fig.update_layout(bargap=0.2)
+    st.markdown("**1️⃣ Late vs booking**")
+
+    for delay in range (6):
+        filtered_latencies = latencies.loc[latencies["late_by"] > (60*delay)]
+        overtime.loc[delay,"nb_late"] = filtered_latencies['count'].sum()
+        overtime.loc[delay,"percent_late"] = round(100 * filtered_latencies['count'].sum() / df_no_canceled['late_by'].count(), 1)
+
+    fig = px.area(overtime, y="nb_late")
+    fig.update_layout(
+        xaxis_title="hours late"
+    )
+    #fig.show()
+    st.plotly_chart(fig, use_container_width=True)
+
+    fig = px.area(overtime, y="percent_late")
+    fig.update_layout(
+        xaxis_title="hours late"
+    )
+    #fig.show()
     st.plotly_chart(fig, use_container_width=True)
 
 with col2:
-    st.markdown("**2️⃣ Example of input form**")
+    st.markdown("**1️⃣ Late vs next rental**")
 
-    with st.form("average_sales_per_country"):
-        country = st.selectbox("Select a country you want to see sales", data["country"].sort_values().unique())
-        start_period = st.date_input("Select a start date you want to see your metric")
-        end_period = st.date_input("Select an end date you want to see your metric")
-        submit = st.form_submit_button("submit")
+    for delay in range (6):
+        real_filtered_latencies = real_latencies.loc[(real_latencies["real_delta"] < 0) & (real_latencies["real_delta"] < (-60*delay))]
+        overtime.loc[delay,"nb_real_late"] = real_filtered_latencies['count'].sum()
+        overtime.loc[delay,"percent_real_late"] = round(100 * real_filtered_latencies['count'].sum() / df_no_canceled['late_by'].count(), 1)
 
-        if submit:
-            avg_period_country_sales = data[(data["country"]==country)]
-            start_period, end_period = pd.to_datetime(start_period), pd.to_datetime(end_period)
-            mask = (avg_period_country_sales["Date"] > start_period) & (avg_period_country_sales["Date"] < end_period)
-            avg_period_country_sales = avg_period_country_sales[mask].mean()
-            st.metric("Average sales during selected period (in $)", np.round(avg_period_country_sales, 2))
+    fig = px.area(overtime, y="nb_real_late")
+    fig.update_layout(
+        xaxis_title="hours late"
+    )
+    #fig.show()
+    st.plotly_chart(fig, use_container_width=True)
 
+    fig = px.area(overtime, y="percent_real_late")
+    fig.update_layout(
+        xaxis_title="hours late"
+    )
+    #fig.show()
+    st.plotly_chart(fig, use_container_width=True)
 
-### Side bar 
-st.sidebar.header("Build dashboards with Streamlit")
-st.sidebar.markdown("""
-    * [Load and showcase data](#load-and-showcase-data)
-    * [Charts directly built with Streamlit](#simple-bar-chart-built-directly-with-streamlit)
-    * [Charts built with Plotly](#simple-bar-chart-built-with-plotly)
-    * [Input Data](#input-data)
+st.markdown("""
+    More than 50% of rentals are brought back late.
+    Given the dataset, we can't know whether these late drop off have been discussed with the car owner or not.
+            
+    We should look at the "real late" drop off, meaning the drop off made after the start time for the next rental.
+            
+    We can see more than 15% of rental are deposited later than the next rental. The issue raised by Getaround looks serious.
 """)
-e = st.sidebar.empty()
-e.write("")
-st.sidebar.write("Made with 💖 by [Jedha](https://jedha.co)")
 
+st.markdown("---")
 
+st.header("""
+    What's the volume of bookings impacted by a "Delay before next rental" feature ?
+""")
 
-### Footer 
-empty_space, footer = st.columns([1, 2])
+df_no_canceled_hours_delay = df_no_canceled_short_delay.loc[df_no_canceled_short_delay['time_delta_with_previous_rental_in_minutes'] < 300]
+df_no_canceled_mins_delay = df_no_canceled_short_delay.loc[df_no_canceled_short_delay['time_delta_with_previous_rental_in_minutes'] < 90]
 
-with empty_space:
-    st.write("")
+col1, col2, col3 = st.columns(3)
 
-with footer:
-    st.markdown("""
-        🍇
-        If you want to learn more, check out [streamlit's documentation](https://docs.streamlit.io/) 📖
-    """)
+col1.metric("Next booking under 6h", 
+          f"{df_no_canceled_hours_delay.shape[0]}", 
+          f"({round(100* df_no_canceled_hours_delay['real_delta'].count() / df_no_canceled['late_by'].count(), 2)} %)")
+col2.metric("Next booking under 90min", 
+          f"{df_no_canceled_mins_delay.shape[0]}", 
+          f"({round(100* df_no_canceled_mins_delay['real_delta'].count() / df_no_canceled['late_by'].count(), 2)} %)")
+col3.metric("90min / 6h delays", 
+          f"{round(100*df_no_canceled_mins_delay.shape[0]/df_no_canceled_hours_delay.shape[0],1)} %",)
+
+fig = px.histogram(df_no_canceled_hours_delay, y='time_delta_with_previous_rental_in_minutes', nbins=6)
+#fig.show()
+st.plotly_chart(fig, use_container_width=True)
+
+st.markdown("""
+    We can see 5.6% of uncanceled rentals start less than 6h after the previous rental's drop off time.
+    Decreasing the threshold to rentals starting less than 90min after the previous rental's drop off time, we get 3% of all uncanceled rentals
+    (it's still more than 50% of the 6h threshold)
+""")
+
+st.subheader("3% of rentals start less than 90min after the previous rental")
+
+st.markdown("""
+    Given "real late" dropoff less than 60min for the next rental reprents 0.8% of rentals (50% of all real late dropoffs)
+    Setting a 90min delay between two bookings would make sure these 0.8% rentals happen smoothly.
+    On the other side, 3% of all rentals would be affected.
+            
+    While this could mean a delay is a bad idea : gain 0.8% to loose 3%, avoiding these specific 3% bookings does NOT mean
+    a loss of 3% of bookings. It just means "not showing these booking options", leading users to others booking options.
+            
+    While it's not possible with the given data to evaluate the impact of such a feature, we could design a smarter feature 
+    which would :  
+    - Remove the risk of loosing bookings 
+    - Reduce the risk of "real late" dropoffs
+    - Reduce the client insatisfaction on the rare case it still happens
+    - Provide new data to deepen the analysis
+            
+    The feature would be:
+    - Short delay with the previous rental are flagged
+    - A warning is displayed to the user about the short delay risk 
+    - Short delay booking options are penalized in the search engine
+""")
