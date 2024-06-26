@@ -1,5 +1,7 @@
 # getaround-analytics
 
+⚠️ Both servers are sleeping. It will take a few minutes to wake them up on the 1st request.
+
 ## API server
 
 The hosted version with documentation can be found [here](https://getaround-api-demo-9ea335438f34.herokuapp.com/docs).
